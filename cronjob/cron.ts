@@ -7,7 +7,6 @@ const tableExists = async (tableName: string) => {
 };
 
 console.log("Cron job started");
-console.log("===========================================");
 
 const job = cron.schedule("0 0 * * * *", async function jobYouNeedToExecute() {
     console.log("Running task every hour:", new Date().toISOString());
