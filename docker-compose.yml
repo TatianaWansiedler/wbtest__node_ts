@@ -1,0 +1,72 @@
+services:
+  app: &anchor
+    build: .
+    container_name: app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS="--max-old-space-size=4096"
+      - DATABASE_URL=postgres://postgres:password@db:5432/wb_db
+      - PORT=3000
+      - SECRET_KEY=eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NjA2ODAxNywiaWQiOiIwMTkyZGRlYS1mOWU2LTcxNzItODk0Ny1iMjE1Y2I5MmU5NDgiLCJpaWQiOjQ1OTExNjA5LCJvaWQiOjExMzA0NiwicyI6MTA3Mzc0MTgzMiwic2lkIjoiOTMyYzE3NmEtNTA4NS01YzZmLWJjMzMtNGU4NGNkZjU4ZDdlIiwidCI6ZmFsc2UsInVpZCI6NDU5MTE2MDl9.l2C-kGr-1YptJ5iyp_q1RYSxDOgENHXfGepnmo709g2UsGDnT90NnBt5K-nVLVH14XaEFi81dcmeZvF6qz-oxQ
+      - GOOGLE_SHEETS_API_KEY=AIzaSyByj3rt8b3nAeDsGQSvSncPF6Vs0v93Jl0
+      - GOOGLE_SHEETS_ID=18eC0IRhWEYJp4edsM7u4JS5b0huwjg1jkZZMQCHo0rs
+    volumes:
+      - .:/app
+    # took the liberty of adding some memory and CPU to run jest tests in the container itself
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 2g
+        reservations:
+          cpus: '1'
+          memory: 1024m
+    depends_on:
+      - db
+    networks:
+      - pg_network
+
+  #cronjob should be in a separate container
+  crontab:
+    <<: *anchor
+    container_name: crontab
+    build:
+      context: .
+      dockerfile: cronjob/Dockerfile
+    ports: []
+
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_DB: wb_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - pg_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - pg_network
+
+volumes:
+  db_data:
+
+networks:
+  pg_network:
+    driver: bridge

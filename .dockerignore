@@ -1,0 +1,7 @@
+node_modules/
+.idea/
+.husky/
+dist/
+.gitignore
+*.log
+Dockerfile
